@@ -39,7 +39,7 @@ private:
 
     ros::NodeHandle nh;
 
-    ros::Subscriber subLaserCloud;
+    ros::Subscriber subLaserCloud; //接收传感器点云数据
     
     ros::Publisher pubFullCloud;
     ros::Publisher pubFullInfoCloud;
@@ -56,21 +56,24 @@ private:
     pcl::PointCloud<PointType>::Ptr fullCloud; // projected velodyne raw cloud, but saved in the form of 1-D matrix
     pcl::PointCloud<PointType>::Ptr fullInfoCloud; // same as fullCloud, but with intensity - range
 
-    pcl::PointCloud<PointType>::Ptr groundCloud;
-    pcl::PointCloud<PointType>::Ptr segmentedCloud;
-    pcl::PointCloud<PointType>::Ptr segmentedCloudPure;
-    pcl::PointCloud<PointType>::Ptr outlierCloud;
+    pcl::PointCloud<PointType>::Ptr groundCloud;            //地面点云
+    pcl::PointCloud<PointType>::Ptr segmentedCloud;         // 分割后的点云
+    pcl::PointCloud<PointType>::Ptr segmentedCloudPure;     // 分割后的几何信息
+    pcl::PointCloud<PointType>::Ptr outlierCloud;           // 异常点云
 
     PointType nanPoint; // fill in fullCloud at each iteration
 
-    cv::Mat rangeMat; // range matrix for range image
+    // 三个矩阵分别代表点云投影后的rang image 、 标签矩阵和地面矩阵
+    cv::Mat rangeMat; // range matrix for range image 
     cv::Mat labelMat; // label matrix for segmentaiton marking
     cv::Mat groundMat; // ground matrix for ground cloud marking
     int labelCount;
 
+    // 一帧点云的起始角和结束角 
     float startOrientation;
     float endOrientation;
 
+    // 自定义的rosmsg和一些用于BFS的索引(点云分割时使用)
     cloud_msgs::cloud_info segMsg; // info of segmented cloud
     std_msgs::Header cloudHeader;
 
@@ -97,13 +100,15 @@ public:
         pubSegmentedCloudInfo = nh.advertise<cloud_msgs::cloud_info> ("/segmented_cloud_info", 1);
         pubOutlierCloud = nh.advertise<sensor_msgs::PointCloud2> ("/outlier_cloud", 1);
 
+        //  初始化为无效点
         nanPoint.x = std::numeric_limits<float>::quiet_NaN();
         nanPoint.y = std::numeric_limits<float>::quiet_NaN();
         nanPoint.z = std::numeric_limits<float>::quiet_NaN();
         nanPoint.intensity = -1;
 
+        // 初始化函数
         allocateMemory();
-        resetParameters();
+        resetParameters(); //重置参数
     }
 
     void allocateMemory(){
@@ -119,9 +124,11 @@ public:
         segmentedCloudPure.reset(new pcl::PointCloud<PointType>());
         outlierCloud.reset(new pcl::PointCloud<PointType>());
 
+        // 重置投影点云的大小
         fullCloud->points.resize(N_SCAN*Horizon_SCAN);
         fullInfoCloud->points.resize(N_SCAN*Horizon_SCAN);
 
+        //  自定义消息初始化
         segMsg.startRingIndex.assign(N_SCAN, 0);
         segMsg.endRingIndex.assign(N_SCAN, 0);
 
@@ -142,6 +149,7 @@ public:
         queueIndY = new uint16_t[N_SCAN*Horizon_SCAN];
     }
 
+    // 重置参数，每次激光数据处理后都会调用
     void resetParameters(){
         laserCloudIn->clear();
         groundCloud->clear();
@@ -180,19 +188,19 @@ public:
     
     void cloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
 
-        // 1. Convert ros message to pcl point cloud
+        // 1. Convert ros message to pcl point cloud； 将ros消息的点云转换成pcd格式（用pcl库处理）
         copyPointCloud(laserCloudMsg);
-        // 2. Start and end angle of a scan
+        // 2. Start and end angle of a scan； 找到点云的起始和终止角度
         findStartEndAngle();
-        // 3. Range image projection
+        // 3. Range image projection ; 点云重投影到Range image
         projectPointCloud();
-        // 4. Mark ground points
+        // 4. Mark ground points; 提取地面点（移除地面点？）
         groundRemoval();
-        // 5. Point cloud segmentation
+        // 5. Point cloud segmentation ； 得到分割的点云
         cloudSegmentation();
-        // 6. Publish all clouds
-        publishCloud();
-        // 7. Reset parameters for next iteration
+        // 6. Publish all clouds； 发布分割的点云（分割的结果多种点云，包括分割后的点云、地面点云、异常点云等）
+        publishCloud(); 
+        // 7. Reset parameters for next iteration； 清空该帧点云信息
         resetParameters();
     }
 
@@ -226,12 +234,14 @@ public:
                 rowIdn = laserCloudInRing->points[i].ring;
             }
             else{
+                // 就算行号
                 verticalAngle = atan2(thisPoint.z, sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y)) * 180 / M_PI;
                 rowIdn = (verticalAngle + ang_bottom) / ang_res_y;
             }
             if (rowIdn < 0 || rowIdn >= N_SCAN)
                 continue;
 
+            // 计算每个点云在Rang Image中的列号
             horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
 
             columnIdn = -round((horizonAngle-90.0)/ang_res_x) + Horizon_SCAN/2;
@@ -240,7 +250,7 @@ public:
 
             if (columnIdn < 0 || columnIdn >= Horizon_SCAN)
                 continue;
-
+            //  mat中存储点云深度信息
             range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y + thisPoint.z * thisPoint.z);
             if (range < sensorMinimumRange)
                 continue;

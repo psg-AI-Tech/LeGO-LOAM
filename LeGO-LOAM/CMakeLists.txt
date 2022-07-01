@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   cv_bridge
-  image_transport
+  image_transportcamera_init
 
   pcl_ros
   pcl_conversions

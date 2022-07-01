@@ -43,6 +43,11 @@
 #include <array>
 #include <thread>
 #include <mutex>
+/**
+ * @brief  定义了一些基本的使用变量和结构体；全局变量/参数
+ * 
+ */
+// 
 
 #define PI 3.14159265
 
@@ -59,11 +64,12 @@ extern const string fileDirectory = "/tmp/";
 // Using velodyne cloud "ring" channel for image projection (other lidar may have different name for this channel, change "PointXYZIR" below)
 extern const bool useCloudRing = true; // if true, ang_res_y and ang_bottom are not used
 
+// TODO #if  使用的激光雷达 默认VLP-16
 // VLP-16
-extern const int N_SCAN = 16;
+extern const int N_SCAN = 16;  // 线， 索引， 1800*16 矩阵
 extern const int Horizon_SCAN = 1800;
-extern const float ang_res_x = 0.2;
-extern const float ang_res_y = 2.0;
+extern const float ang_res_x = 0.2; // 水平方向角度分辨率
+extern const float ang_res_y = 2.0; //垂直方向加度分辨率
 extern const float ang_bottom = 15.0+0.1;
 extern const int groundScanInd = 7;
 
@@ -101,38 +107,47 @@ extern const int groundScanInd = 7;
 // extern const float ang_bottom = 16.6+0.1;
 // extern const int groundScanInd = 15;
 
+// 默认关闭回环检测
 extern const bool loopClosureEnableFlag = false;
+//建图处理时间间隔，只有时间间隔大于这个值才能进行建图优化， s秒
 extern const double mappingProcessInterval = 0.3;
 
+// 处理频率0.1s(10Hz) ,imu队列长度
 extern const float scanPeriod = 0.1;
 extern const int systemDelay = 0;
 extern const int imuQueLength = 200;
 
+// 点云分割设置
 extern const float sensorMinimumRange = 1.0;
 extern const float sensorMountAngle = 0.0;
+// 点云分割的跨度60度，在imageProjection中用于判断平面
 extern const float segmentTheta = 60.0/180.0*M_PI; // decrese this value may improve accuracy
+//检查上下左右连续5个点做为分割的特征依据
 extern const int segmentValidPointNum = 5;
 extern const int segmentValidLineNum = 3;
 extern const float segmentAlphaX = ang_res_x / 180.0 * M_PI;
 extern const float segmentAlphaY = ang_res_y / 180.0 * M_PI;
 
-
+// 点特征数
 extern const int edgeFeatureNum = 2;
+// 面特征数
 extern const int surfFeatureNum = 4;
+// 总特征数
 extern const int sectionsTotal = 6;
 extern const float edgeThreshold = 0.1;
 extern const float surfThreshold = 0.1;
+// 特征选取间隔
 extern const float nearestFeatureSearchSqDist = 25;
 
 
-// Mapping Params
+// Mapping Params 建图参数
 extern const float surroundingKeyframeSearchRadius = 50.0; // key frame that is within n meters from current pose will be considerd for scan-to-map optimization (when loop closure disabled)
 extern const int   surroundingKeyframeSearchNum = 50; // submap size (when loop closure enabled)
-// history key frames (history submap for loop closure)
+// history key frames (history submap for loop closure) //考虑回环成立的阈值
 extern const float historyKeyframeSearchRadius = 7.0; // key frame that is within n meters from current pose will be considerd for loop closure
+//回环子图的构建关键帧数目2n+1
 extern const int   historyKeyframeSearchNum = 25; // 2n+1 number of hostory key frames will be fused into a submap for loop closure
 extern const float historyKeyframeFitnessScore = 0.3; // the smaller the better alignment
-
 extern const float globalMapVisualizationSearchRadius = 500.0; // key frames with in n meters will be visualized
 
 
@@ -169,14 +184,16 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIR,
     */
 struct PointXYZIRPYT
 {
+    // 该点元素有4个元素
     PCL_ADD_POINT4D
     PCL_ADD_INTENSITY;
     float roll;
     float pitch;
     float yaw;
     double time;
+    // 确保new操作符对齐操作
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
+} EIGEN_ALIGN16; //强制SSE对齐
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIRPYT,
                                    (float, x, x) (float, y, y)

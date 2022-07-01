@@ -1,0 +1,23 @@
+resulution: 1
+frame_id: "map"
+# base_frame_id: "aft_mapped"
+# frame_id: "aft_mapped"
+sensor_model:
+  max_range: 20.0
+  hit: 0.7
+  miss: 0.4
+  min: 0.12
+  max: 0.97
+latch: true
+
+graound_filter_angle: 3.14
+  
+pointcloud_max_z: 1.6
+pointcloud_min_z: 0.8
+
+ground_filter: 
+  distance: 0.04
+  angle: 0.15
+occupancy_min_z: 0.1
+occupancy_max_z: 50
+

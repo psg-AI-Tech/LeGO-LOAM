@@ -1,0 +1,7 @@
+<launch>
+  
+  <param name="use_sim_time" value="true" />
+    <arg name="bag_filename"  default="/media/zj/Ubuntu/DataSet/KITTI/loam_bag/nsh_indoor_outdoor.bag" />
+  <node pkg="rosbag" type="play" name="playbag"  args="--clock --hz 10 $(arg bag_filename)" />
+ 
+</launch>
