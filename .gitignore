@@ -1,0 +1,18 @@
+.vscode
+[Dd]bug
+cmake-build-debug
+.idea
+[Bb]uild
+dist
+manual
+doc/*.xlsx
+doc/testlog/*
+doc/*.png
+doc/*.svg
+*.out
+*.log.md
+settings.json
+# doc/*.txt
+*.spec
+
+

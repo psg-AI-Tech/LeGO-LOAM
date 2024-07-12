@@ -67,7 +67,7 @@ extern const bool useCloudRing = true; // if true, ang_res_y and ang_bottom are 
 // TODO #if  使用的激光雷达 默认VLP-16
 // VLP-16
 extern const int N_SCAN = 16;  // 线， 索引， 1800*16 矩阵
-extern const int Horizon_SCAN = 1800;
+extern const int Horizon_SCAN = 1800;  // 水平角分辨率0.2， 那么1°就是5个点，一圈 360/0.2=1800个点
 extern const float ang_res_x = 0.2; // 水平方向角度分辨率
 extern const float ang_res_y = 2.0; //垂直方向加度分辨率
 extern const float ang_bottom = 15.0+0.1;

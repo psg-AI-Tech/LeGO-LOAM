@@ -113,9 +113,11 @@ public:
 
     void allocateMemory(){
 
+        // 分配内存/创建容器 存放不同点云/结果点云的容器
         laserCloudIn.reset(new pcl::PointCloud<PointType>());
         laserCloudInRing.reset(new pcl::PointCloud<PointXYZIR>());
 
+        // 投影前(准备重投影)的点云？
         fullCloud.reset(new pcl::PointCloud<PointType>());
         fullInfoCloud.reset(new pcl::PointCloud<PointType>());
 
@@ -126,9 +128,11 @@ public:
 
         // 重置投影点云的大小
         fullCloud->points.resize(N_SCAN*Horizon_SCAN);
-        fullInfoCloud->points.resize(N_SCAN*Horizon_SCAN);
+        fullInfoCloud->points.resize(N_SCAN*Horizon_SCAN); //和fullCloud完全一样，只是有强度信息(点类型中的强度字段有赋值）
+        
 
         //  自定义消息初始化
+        // 发布分割后的点云的信息
         segMsg.startRingIndex.assign(N_SCAN, 0);
         segMsg.endRingIndex.assign(N_SCAN, 0);
 
@@ -209,6 +213,7 @@ public:
         segMsg.startOrientation = -atan2(laserCloudIn->points[0].y, laserCloudIn->points[0].x);
         segMsg.endOrientation   = -atan2(laserCloudIn->points[laserCloudIn->points.size() - 1].y,
                                                      laserCloudIn->points[laserCloudIn->points.size() - 1].x) + 2 * M_PI;
+        // 限制角度范围
         if (segMsg.endOrientation - segMsg.startOrientation > 3 * M_PI) {
             segMsg.endOrientation -= 2 * M_PI;
         } else if (segMsg.endOrientation - segMsg.startOrientation < M_PI)
